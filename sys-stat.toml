@@ -2,43 +2,43 @@
 # Example config file
 
 [general]
-# This program is run whenever a [[service]] is checked and the status is different from before.
+# This program is run whenever a [[sys]] is checked and the status is different from before.
 # A simple template language is supported, such that several constants get replaced
 # when used in any string in the command array:
-#  {name} = the name section from the [[service]] block
+#  {name} = the name section from the [[sys]] block
 #  {status} = either "good" or "bad". In the future we may also report a "degraded" state.
 #  {reason} = any details known about what occurred, for example an http endpoint may report "returned 404 when"
 on_status_change = [
-  "notify-send", "Service {name} is now {status} because {reason}'",
+  "notify-send", "sys {name} is now {status} because {reason}'",
 ]
 # This program is run after on_status_change when {status} == "good"
 on_status_good = [
-  "notify-send", "Service {name} has resumed.",
+  "notify-send", "sys {name} has resumed.",
 ]
 # This program is run after on_status_change when {status} == "bad"
 on_status_bad = [
-  "notify-send", "Service {name} has failed!",
+  "notify-send", "sys {name} has failed!",
 ]
-# While running service-status prints events to this file in CSV format.
-# The plan is to provide details such as service latency which can then
-# be graphed to discover when services are likely to break and if they are
+# While running sys-stat prints events to this file in CSV format.
+# The plan is to provide details such as sys latency which can then
+# be graphed to discover when syss are likely to break and if they are
 # nearing capacity limits.
 log_file = "/tmp/status.csv"
 
 
-# Each [[service]] block is required to have:
-#  - name - a unique name for the service
+# Each [[sys]] block is required to have:
+#  - name - a unique name for the sys
 #  - uri - an http, https, or ftp url.
 #          More protocols will be added later, but this must
 #          describe the host and connection details.
 # 
 # The rest are optional and default to empty strings or some sane default value
 
-[[service]]
+[[sys]]
 name = "Example dot org"
 uri = "http://example.org/"
 description = """
-  This service responds to http GET requests with a 200 and a document
+  This system responds to http GET requests with a 200 and a document
   containing the phrase "This domain is for use in illustrative examples in documents".
 """
 # If the response does not contain this the status becomes "bad"

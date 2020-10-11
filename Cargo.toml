@@ -5,7 +5,7 @@ authors = ["Jeffrey McAteer <jeffrey.p.mcateer@gmail.com>"]
 edition = "2018"
 
 [[bin]]
-name = "service-status"
+name = "sys-stat"
 path = "src/main.rs"
 
 [dependencies]
