@@ -9,3 +9,6 @@ name = "sys-stat"
 path = "src/main.rs"
 
 [dependencies]
+toml = "0.5"
+serde = { version = "1.0", features = ["derive"] }
+dirs = "3.0"
