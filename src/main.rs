@@ -21,7 +21,7 @@ fn main() {
     // The first file in this list which exists is picked
     // as the config file
     let possible_config_files = [
-      "target/sys-stat.toml", // This is a .gitignore-d directory we can use for quickly testing endpoints not publicly tracked
+      "target/sys-stat.toml", // This is a .gitignore-d directory  we can use for quickly testing endpoints not publicly tracked
       "sys-stat.toml",
       &format!("{}/.sys-stat.toml", home_dir.display()),
       &format!("{}\\.sys-stat.toml", home_dir.display()),
