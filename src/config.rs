@@ -5,30 +5,32 @@ use serde::{
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    general: General,
-    sys: Vec<System>,
+  pub general: General,
+  pub sys: Vec<System>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct General {
-  log_file: String,
-  on_status_change: Vec<String>,
-  on_status_good: Vec<String>,
-  on_status_bad: Vec<String>,
+  pub log_file: String,
+  pub on_status_change: Vec<String>,
+  pub on_status_good: Vec<String>,
+  pub on_status_bad: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct System {
-  name: String,
-  uri: String,
+  pub name: String,
+  pub uri: String,
   
   #[serde(default = "default_description")]
-  description: String,
-  response_must_contain: Option<String>,
+  pub description: String,
+  pub response_must_contain: Option<String>,
   #[serde(default = "default_response_must_finish_within")]
-  response_must_finish_within: String,
+  pub response_must_finish_within: String,
   #[serde(default = "default_check_interval")]
-  check_interval: String,
+  pub check_interval: String,
+  #[serde(default = "default_last_check_epoch_seconds")]
+  pub last_check_epoch_seconds: u64,
 }
 
 
@@ -42,5 +44,9 @@ fn default_response_must_finish_within() -> String {
 
 fn default_check_interval() -> String {
   return "10m".to_string();
+}
+
+fn default_last_check_epoch_seconds() -> u64 {
+  return 0;
 }
 

@@ -23,6 +23,8 @@ on_status_bad = [
 # The plan is to provide details such as sys latency which can then
 # be graphed to discover when syss are likely to break and if they are
 # nearing capacity limits.
+# Format is:
+#  timestamp, service name, status (true/false), latency (milliseconds)
 log_file = "/tmp/status.csv"
 
 
@@ -48,6 +50,25 @@ response_must_finish_within = "30s"
 
 check_interval = "5m"
 
+
+[[sys]]
+name = "fast sys"
+uri = "http://example.org/"
+check_interval = "30s"
+
+
+[[sys]]
+name = "high latency system"
+uri = "http://slowwly.robertomurray.co.uk/delay/8000/url/http://example.org"
+response_must_finish_within = "3s"
+check_interval = "30s"
+
+
+[[sys]]
+name = "another high latency system"
+uri = " https://flash.siwalik.in/delay/5000/url/http://example.org"
+response_must_finish_within = "5s"
+check_interval = "30s"
 
 
 

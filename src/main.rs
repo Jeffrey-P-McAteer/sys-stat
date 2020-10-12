@@ -1,14 +1,20 @@
 
 use dirs;
 use toml;
+use humantime;
 
 use std::path::{
   Path, PathBuf
 };
 use std::fs;
 use std::env;
+use std::time::{
+  SystemTime, UNIX_EPOCH, Duration
+};
+use std::{thread, time};
 
 mod config;
+mod check;
 
 fn main() {
     let home_dir = dirs::home_dir().unwrap_or(PathBuf::from("."));
@@ -40,7 +46,7 @@ fn main() {
       println!("Error parsing config: {}", e);
       return;
     }
-    let config = config.expect("Already checked Err case");
+    let mut config = config.expect("Already checked Err case");
 
     // For debugging set DUMP_CONFIG=1 or DUMP_CONFIG=true
     if let Ok(val) = env::var("DUMP_CONFIG") {
@@ -49,7 +55,23 @@ fn main() {
       }
     }
 
+    // We clone this because of mutability rules related to config.sys
+    let general = config.general.clone();
 
+    // Infinite loop which keeps track of system status and appends
+    // latency information to config.log_file
+    let delay = time::Duration::from_millis(2_000);
+    loop {
+      //for &mut sys in &config.sys {
+      for i in 0..config.sys.len() {
+        let sys = &mut config.sys[i];
+        if needs_check(sys) {
+          check::check(&general, sys);
+          update_last_check_time(sys);
+        }
+      }
+      thread::sleep(delay);
+    }
 
 
 }
@@ -64,4 +86,35 @@ fn get_first_path(paths: &[&str]) -> Result<PathBuf, ()> {
   Err(())
 }
 
+fn needs_check(sys: &config::System) -> bool {
+  let duration = humantime::parse_duration(&sys.check_interval);
+  if let Err(e) = duration {
+    println!("Error: check_interval for system '{}' is invalid: {} ({})", sys.name, sys.check_interval, e);
+    return false;
+  }
+  let duration = duration.expect("Checked Err case");
+  let next_check_time = UNIX_EPOCH + Duration::from_secs( sys.last_check_epoch_seconds ) + duration;
+  return SystemTime::now() > next_check_time;
+}
+
+fn update_last_check_time(sys: &mut config::System) {
+  sys.last_check_epoch_seconds = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards").as_secs();
+}
+
+fn append(path: &str, line: String) {
+  use std::fs::OpenOptions;
+  use std::io::prelude::*;
+
+  let mut file = OpenOptions::new()
+        .write(true)
+        .append(true)
+        .create(true)
+        .open(path)
+        .expect("Coult not open log file to append a new line");
+
+  if let Err(e) = writeln!(file, "{}", line) {
+    println!("Error writing to {}: {}", path, e);
+  }
+
+}
 
