@@ -7,7 +7,11 @@ import pprint
 import random
 
 import matplotlib.pyplot as plt # python3 -m pip install --user matplotlib
+import matplotlib.dates as md
+
 import numpy as np # python3 -m pip install --user numpy
+
+import dateutil.parser # python3 -m pip install --user python-dateutil
 
 if __name__ == '__main__':
   status_csv = "/tmp/status.csv" if len(sys.argv) < 2 else sys.argv[1]
@@ -27,12 +31,15 @@ if __name__ == '__main__':
       if not sys_name in system_data:
         system_data[sys_name] = []
       
-      time_epoch_s = int( datetime.datetime.fromisoformat(row[0].split(".")[0]).timestamp() )
+      #time_epoch_s = int( dateutil.parser.isoparse(row[0]).timestamp() )
+      # isoparse misses the 'Z' and sets the local timezone instead of UTC, so we correct by subtracting 4 hours.
+      timestamp = dateutil.parser.isoparse(row[0]) - datetime.timedelta(hours=4)
+      time_epoch_s = int( timestamp.timestamp() )
       up_or_down = "t" in row[2]
       latency_ms = int(row[3])
       
       system_data[sys_name].append(
-        (time_epoch_s, up_or_down, latency_ms)
+        (timestamp, up_or_down, latency_ms)
       )
 
       if time_epoch_s < min_timestamp:
@@ -50,6 +57,10 @@ if __name__ == '__main__':
 
   ax.set_xlabel('time (epoch seconds)')
   ax.set_ylabel('latency (milliseconds)')
+
+  xfmt = md.DateFormatter('%Y-%m-%d %H:%M')
+  plt.gca().xaxis.set_major_formatter(xfmt)
+  ax.xaxis_date('EDT')
 
   colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 
