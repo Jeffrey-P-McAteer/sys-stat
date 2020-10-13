@@ -15,6 +15,10 @@ a matplotlib chart of tested systems, like this:
 
 ![Example Chart](example_chart.jpg)
 
+The X axis is time in Epoch seconds, the Y axis is latency in milliseconds,
+and an `X` on the line represents a point when the system was determined to
+be down (either due to a closed connection, a timeout, or a response not having required content).
+
 # Configuration file
 
 see `sys-stat.toml` for an example config file.
