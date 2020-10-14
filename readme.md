@@ -64,6 +64,15 @@ check_interval = "30s"
 
 ```
 
+# Future Ideas
 
+ - [ ] Make SSL certificates expiring in the next 2 weeks a failure case
+    - This affects `https://` endpoints and gives teams warning before a certificate expires
+ - [ ] Add support for `postgresql://` URLS using [this library](https://docs.rs/postgres/0.17.5/postgres/)
+    - This would let us test databases and report latency/downtime
+ - [ ] Execute commands in `on_status_change`, `on_status_good`, and `on_status_bad` in `[general]`
+ - [ ] Add an email report config section;
+    - given an email account and a new field `report_to` in each `[[sys]]` block
+      send emails when system downtime is detected.
 
 
