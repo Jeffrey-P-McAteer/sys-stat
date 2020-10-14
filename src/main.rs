@@ -34,6 +34,7 @@ fn main() {
     }
 
     let config_file = config_file.expect("Already checked Err case");
+    let config_file = fs::canonicalize(&config_file).expect("Could not get absolute path of file"); // very rare
     println!("Using {:?} as config file.", &config_file);
 
     let config = fs::read_to_string(&config_file);
