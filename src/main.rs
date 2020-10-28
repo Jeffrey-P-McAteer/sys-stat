@@ -2,6 +2,7 @@
 use dirs;
 use toml;
 use humantime;
+use ctrlc;
 
 use std::path::{
   Path, PathBuf
@@ -12,11 +13,26 @@ use std::time::{
   SystemTime, UNIX_EPOCH, Duration
 };
 use std::{thread, time};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 mod config;
 mod check;
 
 fn main() {
+    // a signal handler can change this to tell the loop at
+    // the end to exit gracefully. When exit_flag == true
+    // an exit is requested.
+    let exit_flag = Arc::new(AtomicBool::new(false));
+    let ef = exit_flag.clone();
+
+    let e = ctrlc::set_handler(move || {
+      ef.store(true, Ordering::SeqCst);
+    });
+    if let Err(e) = e {
+      println!("Error setting exit handler: {}", e);
+    }
+
     let home_dir = dirs::home_dir().unwrap_or(PathBuf::from("."));
     // The first file in this list which exists is picked
     // as the config file
@@ -57,13 +73,15 @@ fn main() {
       }
     }
 
-    // We clone this because of mutability rules related to config.sys
+    // We clone this because of mutability rules related to config.sys in the main loop below
     let general = config.general.clone();
 
     // Infinite loop which keeps track of system status and appends
     // latency information to config.log_file
-    let delay = time::Duration::from_millis(2_000);
-    loop {
+    // We sleep in chunks to respond quickly when exit_flag changes.
+    let delay_chunk = time::Duration::from_millis(50);
+    let delay_count = 2_000 / 50; // 2_000ms = chunk * delay_count
+    'main_loop: loop {
       //for &mut sys in &config.sys {
       for i in 0..config.sys.len() {
         let sys = &mut config.sys[i];
@@ -71,10 +89,17 @@ fn main() {
           check::check(&general, sys);
           update_last_check_time(sys);
         }
+        if exit_flag.load(Ordering::SeqCst) {
+          break 'main_loop;
+        }
       }
-      thread::sleep(delay);
+      for _ in 0..delay_count {
+        thread::sleep(delay_chunk);
+        if exit_flag.load(Ordering::SeqCst) {
+          break 'main_loop;
+        }
+      }
     }
-
 
 }
 

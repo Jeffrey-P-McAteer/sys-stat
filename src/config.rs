@@ -12,6 +12,7 @@ pub struct Config {
 #[derive(Debug, Deserialize, Clone)]
 pub struct General {
   pub log_file: String,
+  #[serde(default = "default_empty_vec_str")]
   pub on_status_change: Vec<String>,
   pub on_status_good: Vec<String>,
   pub on_status_bad: Vec<String>,
@@ -50,3 +51,6 @@ fn default_last_check_epoch_seconds() -> u64 {
   return 0;
 }
 
+fn default_empty_vec_str() -> Vec<String> {
+  vec![]
+}
