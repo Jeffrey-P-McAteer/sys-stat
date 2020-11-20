@@ -3,6 +3,11 @@ use serde::{
   Deserialize
 };
 
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+pub enum Status {
+  Good, Bad
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Config {
   pub general: General,
@@ -12,10 +17,18 @@ pub struct Config {
 #[derive(Debug, Deserialize, Clone)]
 pub struct General {
   pub log_file: String,
+  
   #[serde(default = "default_empty_vec_str")]
   pub on_status_change: Vec<String>,
+  
+  #[serde(default = "default_empty_vec_str")]
   pub on_status_good: Vec<String>,
+
+  #[serde(default = "default_empty_vec_str")]
   pub on_status_bad: Vec<String>,
+
+  #[serde(default = "default_status_history_length")]
+  pub status_history_length: u64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -32,6 +45,15 @@ pub struct System {
   pub check_interval: String,
   #[serde(default = "default_last_check_epoch_seconds")]
   pub last_check_epoch_seconds: u64,
+
+  // The status history is mutated by the check::check function.
+  // We generally keep the last 2 statuses, but this can be tuned.
+  #[serde(default = "default_status_history")]
+  pub status_history: Vec<Status>,
+
+  #[serde(default = "default_last_stable_status")]
+  pub last_stable_status: Option<Status>,
+
 }
 
 
@@ -54,3 +76,17 @@ fn default_last_check_epoch_seconds() -> u64 {
 fn default_empty_vec_str() -> Vec<String> {
   vec![]
 }
+
+fn default_status_history() -> Vec<Status> {
+  vec![]
+}
+
+fn default_last_stable_status() -> Option<Status> {
+  None
+}
+
+fn default_status_history_length() -> u64 {
+  2
+}
+
+

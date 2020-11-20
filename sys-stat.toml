@@ -21,7 +21,7 @@ on_status_bad = [
 ]
 # While running sys-stat prints events to this file in CSV format.
 # The plan is to provide details such as sys latency which can then
-# be graphed to discover when syss are likely to break and if they are
+# be graphed to discover when systems are likely to break and if they are
 # nearing capacity limits.
 # Format is:
 #  timestamp, service name, status (true/false), latency (milliseconds)

@@ -17,5 +17,6 @@ humantime = "2.0"
 reqwest = { version = "0.10", features = ["blocking"] }
 tokio = { version = "0.2", features = ["full"] }
 ctrlc = "3.1"
-
+handlebars = "3.5"
+serde_json = "1.0"
 
