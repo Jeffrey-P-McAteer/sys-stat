@@ -40,6 +40,15 @@ To quickly run in debug mode:
 cargo run
 ```
 
+There is a feature to enable/disable the GUI process. By default the GUI is compiled in,
+to disable it add the `--no-default-features` flag:
+
+```bash
+cargo build --release --no-default-features
+# Rapid testing can be done the same way
+cargo run --no-default-features
+```
+
 # Data Visualization
 
 Run `python chart.py [/path/to/log.csv]` to display

@@ -14,10 +14,13 @@ use std::time::{
 };
 use std::{thread, time};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 mod config;
 mod check;
+
+#[cfg(feature = "web-view")]
+mod gui;
 
 fn main() {
     // a signal handler can change this to tell the loop at
@@ -64,7 +67,7 @@ fn main() {
       println!("Error parsing config: {}", e);
       return;
     }
-    let mut config = config.expect("Already checked Err case");
+    let config = config.expect("Already checked Err case");
 
     // For debugging set DUMP_CONFIG=1 or DUMP_CONFIG=true
     if let Ok(val) = env::var("DUMP_CONFIG") {
@@ -76,14 +79,51 @@ fn main() {
     // We clone this because of mutability rules related to config.sys in the main loop below
     let general = config.general.clone();
 
-    // Infinite loop which keeps track of system status and appends
-    // latency information to config.log_file
-    // We sleep in chunks to respond quickly when exit_flag changes.
-    let delay_chunk = time::Duration::from_millis(50);
-    let delay_count = 2_000 / 50; // 2_000ms = chunk * delay_count
-    'main_loop: loop {
-      //for &mut sys in &config.sys {
-      for i in 0..config.sys.len() {
+    
+    // This fn changes depending on the "web-view" feature.
+    // See the conditionally compiled functions below.
+    main_loop(Arc::new(Mutex::new(config)), general, exit_flag);
+}
+
+// GUI main function
+#[cfg(feature = "web-view")]
+fn main_loop(mut config: Arc<Mutex<config::Config>>, general: config::General, exit_flag: Arc<AtomicBool>) {
+  // Copy/clone references so we can pass them to the BG thread and use them on the main thread
+  let ef = exit_flag.clone();
+
+  // Run check loop in background
+  let check_config = config.clone();
+  let th = thread::spawn(move || {
+    system_check_loop(check_config, general, exit_flag);
+  });
+  
+  // Run graphics on main thread (win32 is picky about this)
+  if let Err(e) = gui::blocking_gui_main(config.clone(), ef.clone()) {
+    println!("Graphics error: {}", e);
+  }
+
+  ef.store(true, Ordering::SeqCst);
+  println!("Waiting for background thread to exit...");
+  th.join();
+}
+
+// CLI main function
+#[cfg(not(feature = "web-view"))]
+fn main_loop(mut config: Arc<Mutex<config::Config>>, general: config::General, exit_flag: Arc<AtomicBool>) {
+  system_check_loop(config, general, exit_flag);
+}
+
+
+fn system_check_loop(mut config: Arc<Mutex<config::Config>>, general: config::General, exit_flag: Arc<AtomicBool>) {
+  // Infinite loop which keeps track of system status and appends
+  // latency information to config.log_file
+  // We sleep in chunks to respond quickly when exit_flag changes.
+  let delay_chunk = time::Duration::from_millis(50);
+  let delay_count = 2_000 / 50; // 2_000ms = chunk * delay_count
+  'main_loop: loop {
+
+    if let Ok(mut config) = config.lock() {
+      for i in 0..(&config).sys.len() {
         let sys = &mut config.sys[i];
         if needs_check(sys) {
           check::check(&general, sys);
@@ -93,14 +133,16 @@ fn main() {
           break 'main_loop;
         }
       }
-      for _ in 0..delay_count {
-        thread::sleep(delay_chunk);
-        if exit_flag.load(Ordering::SeqCst) {
-          break 'main_loop;
-        }
+    }
+    
+    for _ in 0..delay_count {
+      thread::sleep(delay_chunk);
+      if exit_flag.load(Ordering::SeqCst) {
+        break 'main_loop;
       }
     }
 
+  }
 }
 
 
